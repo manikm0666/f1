@@ -1,29 +1,30 @@
 import streamlit as st
-import streamlit.components.v1 as components
 
 # Set up the page configuration
 st.set_page_config(
     page_title="F1 Stream Player",
     page_icon="🏎️",
-    layout="wide"  # Uses the full width of the screen
+    layout="wide"
 )
 
 st.title("🏎️ Live Stream Player")
 st.caption("Watching: F1 on Apple")
 
-# Define the iframe HTML string
+# We use raw HTML inside st.markdown to prevent Streamlit from forcing a sandbox.
+# This uses a standard flex container to keep it responsive.
 iframe_html = """
-<iframe 
-    src="https://junkieembeds.pages.dev/embed/f1-on-apple" 
-    width="100%" 
-    height="100%" 
-    frameborder="0" 
-    scrolling="no" 
-    allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
-    allowfullscreen>
-</iframe>
+<div style="width: 100%; height: 650px; overflow: hidden;">
+    <iframe 
+        src="https://junkieembeds.pages.dev/embed/f1-on-apple" 
+        width="100%" 
+        height="100%" 
+        frameborder="0" 
+        scrolling="no" 
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
+        allowfullscreen>
+    </iframe>
+</div>
 """
 
-# Render the iframe component
-# We set a fixed height (e.g., 600px) so the video player has enough vertical space
-components.html(iframe_html, height=600, scrolling=False)
+# Render using markdown with unsafe HTML allowed
+st.markdown(iframe_html, unsafe_allow_html=True)
