@@ -1,34 +1,31 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import requests
 
-st.set_page_config(page_title="F1 Stream Fix", layout="wide")
-
+st.set_page_config(page_title="F1 Live Stream", layout="wide")
 st.title("🏎️ F1 Live Stream")
 
-# We use an HTML block that explicitly defines a 'refresh' rule and passes 
-# a custom meta-referrer policy to mimic the parent domain tracking context.
-spoof_html = """
-<div style="width: 100%; height: 650px; background: #000;">
-    <iframe 
-        src="https://junkieembeds.pages.dev/embed/f1-on-apple" 
-        width="100%" 
-        height="100%" 
-        frameborder="0" 
-        scrolling="no" 
-        referrerpolicy="no-referrer-when-downgrade"
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
-        allowfullscreen>
-    </iframe>
-</div>
+@st.cache_data(ttl=3600)  # Cache the retrieval for performance
+def get_modified_stream():
+    url = "https://junkieembeds.pages.dev/embed/f1-on-apple"
+    headers = {
+        "Referer": "https://timstreams.net/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        html = response.text
+        
+        # Strip or bypass common anti-frame/sandbox detection scripts if present
+        html = html.replace("window.top !== window.self", "false")
+        html = html.replace("top.location", "self.location")
+        
+        return html
+    except Exception as e:
+        return f"<p style='color:red;'>Failed to fetch stream source: {str(e)}</p>"
 
-<script>
-    // We dynamically force the frame element to attach 'timstreams.net' 
-    // into the active browser navigation history object before drawing the viewport.
-    Object.defineProperty(document, 'referrer', {
-        get: function() { return 'https://timstreams.net/'; }
-    });
-</script>
-"""
+# Fetch the raw code using the correct referrer header from the server backend
+stream_html = get_modified_stream()
 
-# Render the container inside Streamlit
-components.html(spoof_html, height=660, scrolling=False)
+# Render the sanitized content inside an isolated component container
+components.html(stream_html, height=650, scrolling=True)
