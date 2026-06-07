@@ -1,37 +1,51 @@
 import streamlit as st
-import base64
+import streamlit.components.v1 as components
 
-st.set_page_config(page_title="F1 Stream Player", layout="wide")
+st.set_page_config(page_title="F1 Stream Fix", layout="wide")
 
 st.title("🏎️ F1 Live Stream")
 
-# The clean HTML document that handles the iframe natively
-html_content = """
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; }
-        iframe { width: 100%; height: 100%; border: none; }
-    </style>
-</head>
-<body>
-    <iframe 
-        src="https://junkieembeds.pages.dev/embed/f1-on-apple" 
-        scrolling="no" 
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
-        allowfullscreen>
-    </iframe>
-</body>
-</html>
+# This script creates an inline Blob document on your actual Streamlit domain,
+# forcing the browser to send a valid HTTP Referer header instead of 'null'.
+blob_bypass_script = """
+<div id="stream-target" style="width:100%; height:650px; background:#000;"></div>
+
+<script>
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; }
+                iframe { width:100%; height:100%; border:none; }
+            </style>
+        </head>
+        <body>
+            <iframe 
+                src="https://junkieembeds.pages.dev/embed/f1-on-apple" 
+                scrolling="no" 
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
+                allowfullscreen>
+            </iframe>
+        </body>
+        </html>
+    `;
+
+    // Create a data blob with a valid text/html mime-type
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const blobURL = URL.createObjectURL(blob);
+
+    // Build the container iframe that targets our new valid blob URL
+    const finalIframe = document.createElement('iframe');
+    finalIframe.src = blobURL;
+    finalIframe.style.width = '100%';
+    finalIframe.style.height = '100%';
+    finalIframe.style.border = 'none';
+    
+    // Append it straight to the target div
+    document.getElementById('stream-target').appendChild(finalIframe);
+</script>
 """
 
-# Encode the HTML into a base64 Data URI to mask the cross-origin reference
-b64_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-data_uri = f"data:text/html;base64,{b64_html}"
-
-# Render using a standard native iframe markdown block
-st.markdown(
-    f'<iframe src="{data_uri}" style="width:100%; height:650px; border:none;"></iframe>', 
-    unsafe_allow_html=True
-)
+# Render the script block
+components.html(blob_bypass_script, height=660, scrolling=False)
